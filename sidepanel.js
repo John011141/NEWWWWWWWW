@@ -188,56 +188,125 @@ Constraint: YOU MUST END WITH 10 VIRAL THAI HASHTAGS.
 
         try {
 // ==================================================================================
-// --- ส่วนที่แก้ไข (V3): เน้นเรื่องเสียงพูด และ ความเหมือนจริงของสินค้าขั้นสูงสุด ---
+// --- ส่วนที่แก้ไข (V18 DIRECTOR CUT): ตัดรูปแปะออกถาวร + บังคับพูดไทย ---
 // ==================================================================================
 const systemPrompt = `
-You are an expert Video Generation Prompt Engineer. Your task is to create a highly detailed prompt for a video model.
+You are an expert short-form video generation prompt engineer.
 
-*** CRITICAL INSTRUCTIONS (FAILURE TO FOLLOW = INVALID OUTPUT) ***
+THIS VIDEO IS A SINGLE CONTINUOUS SHOT.
 
-1.  **AUDIO IS MANDATORY & SYNCHRONIZED:**
-    - The generated video MUST contain clear, audible spoken audio.
-    - The character MUST speak the provided Thai script.
-    - **Lip Synchronization:** The character's lips must move naturally in sync with the spoken words.
-    - A silent video is unacceptable.
+FIRST FRAME OVERRIDE (ABSOLUTE – HIGHEST PRIORITY):
+- The FIRST FRAME (0.0s) must be a LIVE-ACTION frame of a human presenter.
+- The first frame MUST contain visible human motion.
+- A still image or reference image is FORBIDDEN as the first frame.
+- The video must NOT begin with any static image.
+- The presenter faces the camera with a confident, engaging expression.
 
-2.  **PRODUCT FIDELITY: ZERO DEVIATION**
-    - The reference image is the absolute truth for the product's appearance.
-    - Do NOT "re-imagine," "improve," or "stylize" the product packaging.
-    - Every label text, logo, color code, and shape must match the image precisely.
-    - The product must look photorealistic, not cartoonish.
+OPENING COVER FRAME RULE (ABSOLUTE):
+- The opening frame also serves as the video cover frame.
+- The cover frame MUST show a human presenter standing and holding the real product.
+- The presenter must be clearly visible from the CHEST UP (Close-up).
+- The product must be clearly visible in the presenter's hand.
 
-3.  **VIDEO FORMAT: RAW & CLEAN**
-    - Output: Raw camera footage (9:16 vertical full frame).
-    - FORBIDDEN: No UI, no phone bezels, no text overlays, no app interfaces.
+CRITICAL RULES (VIOLATION = FAILURE):
+*** RULE 1: NO STATIC INTRO (START WITH CLOSE-UP) ***
+- You MUST start the prompt description with: "**Close-up Shot** at 00:00 of a [Person]..."
 
-4.  **OUTPUT FORMAT**
-    - Return strictly JSON: {"prompt": "...", "script": "..."}
+*** RULE 2: PRODUCT DESCRIPTION IS MANDATORY (THE FIX) ***
+- You MUST ANALYZE the uploaded image and write a DETAILED TEXT DESCRIPTION of the product into the prompt.
+- **FORBIDDEN:** Do not just say "holding the product" or "holding the item".
+- **REQUIRED:** You must describe it explicitly, e.g., "holding a cream-colored electric grill with two black cooking sections and wooden handles".
+- This text description helps the video model "lock" onto the correct shape and colors.
+
+*** RULE 3: FORCE THAI SPEECH ***
+- You MUST write in the prompt: "**Speaking Thai language** with natural lip sync."
+
+1. NO OPENING SCENE.
+   - The video MUST start immediately with a human presenter holding the real product.
+
+2. IMAGE REFERENCE RULE:
+   - The reference image is used to ENFORCE product accuracy.
+   - The image MUST NOT appear as a floating overlay or background.
+
+3. SPEECH DURATION LIMIT:
+   - The spoken Thai script MUST be completed naturally within **8 seconds**.
+
+4. AUDIO & LIP SYNC:
+   - Clear spoken Thai language is mandatory.
+   - Natural lip movement synchronized with speech.
+
+FULL-FRAME RULE (ABSOLUTE):
+- Vertical 9:16 video.
+- The subject and product must fill the entire canvas edge-to-edge.
+- NO empty margins, NO black bars, NO letterboxing.
+
+5. VIDEO FORMAT:
+   - Single shot, raw camera footage.
+   - Vertical 9:16, full frame.
+   - NO UI, NO subtitles.
+
+*** OUTPUT ***
+- JSON ONLY: {"prompt": "...", "script": "..."}
 `;
 
 const userPrompt = `
-CONTEXT:
-${concept}
+CONTEXT: ${concept}
 
-SCRIPT (THAI ONLY - **MUST BE AUDIBLE SPOKEN W/ LIP SYNC**):
-${videoScriptInput.value}
+OPENING FRAME RULE (ABSOLUTE):
+- At time 0.0s, the video MUST already show a human presenter holding the exact product from the reference image.
+- NO establishing shot.
+- NO product-only frame.
 
-GENERATE A DETAILED PROMPT FOR THIS SCENE:
-- **Type:** Real-life camera footage with clear audio.
-- **Character:** ${gender}, ${nation} look, speaking clearly into the camera.
-- **Action:** ${action}, while speaking.
-- **Background:** ${background}
-- **Product:** The EXACT product from the image (Photorealistic fidelity required).
+SCENE REQUIREMENTS (STRICT):
+- The video STARTS immediately with a human presenter.
+- The product in hand MATCHES THE REFERENCE IMAGE EXACTLY (Digital Twin).
+- The presenter looks at the camera and speaks Thai immediately.
 
-STRICT NEGATIVE PROMPT (Include these constraints):
-**NO silent video, NO muffled audio, NO background music overpowering speech.**
-No phone bezel, no UI, no text overlay, no subtitles.
-**NO distorted product labels, NO wrong colors, NO reimagined packaging.**
+SCRIPT (THAI – MUST FINISH WITHIN 8 SECONDS):
+"${videoScriptInput.value}"
 
-Ensure the prompt explicitly describes the *sound* of the voice and the *movement* of the lips syncing to the Thai script.
+CHARACTER:
+- ${gender}, ${nation} appearance
+- Speaking naturally, confident, conversational Thai
+
+ACTION:
+- Holding the real product (Exact Match to Reference) clearly visible near the face.
+
+BACKGROUND:
+- ${background}
+
+NEGATIVE PROMPT (MANDATORY):
+NO first-frame still image, NO static opening frame, NO image-based first frame, NO product-only shots, NO cutaway shots, NO silent moments.
+**CRITICAL NEGATIVE PROMPT (VISUALS):** distorted product, wrong product label, wrong color, morphed object, bad hands, black bars, letterbox, pillarbox, dark borders, screen margins, wide shot, distant subject, cartoon, 3d render.
+
+The entire video must be one continuous shot of a person holding the product and speaking Thai clearly until the script ends.
+
+GENERATE A LIVE-ACTION PROMPT:
+
+2.  **Construct Scene:**
+- **Camera:** **CLOSE-UP (Chest-up)**, Subject fills 90% of the vertical frame.
+    - **Shot:** **Close-up / Tight Shot** (To ensure full screen & clear product).
+    - **Subject:** A ${nationalitySelect.value} ${genderSelect.value} influencer.
+    - **Audio:** Speaking Thai enthusiastically. Lips moving perfectly with the script.
+    - **Action:** already present in frame at 00:00s in a ${bgSelect.value}, holding the real physical product (Identical to reference image) in hand.
+
+**MANDATORY NEGATIVE PROMPT:**
+"static image intro, slideshow, cover art, picture-in-picture, split screen, floating overlay, english audio, robotic voice, blurry text, black bars, letterboxing, pillarboxing, borders, frames, distorted product, wrong object".
+
+**PROMPT START:**
+"A vertical 9:16 live-action **Close-up Shot (frame-filling)** at 00:00s,
+filling the vertical frame from top to bottom edge-to-edge,
+with the presenter already present,
+holding [INSERT A VERY DETAILED VISUAL DESCRIPTION OF THE PRODUCT FROM THE IMAGE HERE, describing its color, shape, material, and parts]
+and speaking Thai directly to the camera..."
+
+The entire video must be ONE continuous shot.
+The presenter MUST finish speaking completely before the video ends.
+
+GENERATE A LIVE-ACTION VIDEO PROMPT WITH CLEAR AUDIO AND LIP SYNC.
 `;
 // ==================================================================================
-// --- จบส่วนที่แก้ไข (V3) ---
+// --- จบส่วนที่แก้ไข (V18) ---
 // ==================================================================================
 
             const parts = [
@@ -256,7 +325,12 @@ Ensure the prompt explicitly describes the *sound* of the voice and the *movemen
                 .trim();
 
             let resultObj = { prompt: generatedText, script: videoScriptInput.value };
-            try { resultObj = JSON.parse(generatedText); } catch {}
+            try { 
+                resultObj = JSON.parse(generatedText); 
+                if (resultObj.script && resultObj.script !== videoScriptInput.value) {
+                    videoScriptInput.value = resultObj.script; 
+                }
+            } catch {}
 
             // UI Display
             promptsContainer.innerHTML = '';
@@ -267,7 +341,7 @@ Ensure the prompt explicitly describes the *sound* of the voice and the *movemen
                 <div class="card-body">
                     <strong>Prompt (${currentMode}):</strong><br>${resultObj.prompt}
                     <br><br>
-                    <strong>Script:</strong> ${resultObj.script || '-'}
+                    <strong>Script (Thai 8s):</strong> ${resultObj.script || '-'}
                 </div>
                 <div style="display:flex; gap:5px; margin-top:10px;" id="btn-container"></div>
             `;
