@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Generator</title>
+    <link rel="stylesheet" href="sidepanel.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;700&family=Kanit:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        /* CSS เสริมสำหรับปุ่มเลือกโหมด */
+        .mode-selector {
+            display: flex;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 5px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid var(--glass-border);
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+            font-family: 'Kanit', sans-serif;
+        }
+        .mode-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .mode-btn.active {
+            background: var(--neon-blue);
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+        .hidden-controls {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="glitch" data-text="PROMPT AUTO GEN">PROMPT AUTO GEN</h1>
+
+        <div class="input-group">
+            <label for="api-key">คีย์ API GEMINI</label>
+            <div class="api-input-wrapper">
+                <input type="password" id="api-key" placeholder="กรอกคีย์ที่นี่..." autocomplete="off">
+                <button id="save-key-btn" class="icon-btn" title="บันทึกคีย์">💾</button>
+            </div>
+            <div class="scan-line"></div>
+        </div>
+
+        <div class="input-group">
+            <label>🎬 เลือกโหมดวิดีโอ</label>
+            <div class="mode-selector">
+                <button class="mode-btn" id="mode-product">📦 สินค้า (Product)</button>
+                <button class="mode-btn active" id="mode-influencer">🧑‍🎤 คนรีวิว (Influencer)</button>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                <label for="concept" style="margin-bottom:0;">💡 คอนเซปเรื่องราว</label>
+                <button id="auto-concept-btn" class="small-btn" style="border-color: var(--neon-pink); color: var(--neon-pink); font-size: 0.7rem; cursor: pointer;">
+                    ✨ ให้ AI คิดให้
+                </button>
+            </div>
+            
+            <select id="concept-template" style="margin-bottom: 8px; font-size: 0.8rem; color: #b0b0d0; border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0,0,0,0.3);">
+                <option value="">-- เลือกสูตรการรีวิว (Templates) --</option>
+                <option value="เปิดด้วยปัญหาที่คนเจอบ่อย แล้วเสนอสินค้านี้เป็นทางแก้ จบด้วยโปรโมชั่น">😱 ปัญหา -> ทางแก้ (Problem Solution)</option>
+                <option value="รีวิวแกะกล่อง (Unboxing) โชว์ความสวยงาม First Impression และลองใช้จริงทันที">📦 แกะกล่อง (Unboxing)</option>
+                <option value="เปรียบเทียบ Before & After ให้เห็นผลลัพธ์ชัดเจนที่สุด เน้นความว้าว">🔄 เทียบชัดๆ (Before/After)</option>
+                <option value="เล่าเรื่องราว Storytelling สั้นๆ ว่าชีวิตดีขึ้นยังไงเมื่อมีสินค้านี้">📖 เล่าเรื่อง (Storytelling)</option>
+                <option value="POV: มุมมองบุคคลที่ 1 พาไปลองใช้สินค้าเหมือนเพื่อนป้ายยาเพื่อน">👀 ป้ายยา (POV Friend)</option>
+            </select>
+
+            <textarea id="concept" rows="3" placeholder="หรือพิมพ์เอง: แรงขับเคลื่อนคือความศรัทธา..."></textarea>
+            <div class="scan-line"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="product-image">📦 รูปภาพสินค้า (เลือกได้หลายรูป)</label>
+            <input type="file" id="product-image" accept="image/*" multiple style="padding: 8px;">
+            
+            <div id="image-preview-container" class="hidden" style="margin-top: 10px; text-align: center;">
+                <img id="image-preview" src="#" alt="Preview" style="max-width: 100%; max-height: 150px; border: 1px solid var(--neon-blue); border-radius: 4px;">
+            </div>
+            <div class="scan-line"></div>
+        </div>
+
+        <div id="influencer-controls">
+            <div class="input-group">
+                <label for="presenter-action" style="color:var(--neon-pink);">👤 แอคชั่นคนรีวิว (Action)</label>
+                <select id="presenter-action">
+                    <option value="holding_show">🤲 ถือสินค้าโชว์หน้ากล้อง (ยิ้มแย้ม)</option>
+                    <option value="pointing">👉 ชี้ไปที่สินค้า (Excited)</option>
+                    <option value="using">🥤 กำลังใช้งาน/ดื่ม/กิน (Natural)</option>
+                    <option value="hugging">🤗 กอดสินค้า (สำหรับของชิ้นใหญ่)</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="background-select" style="color:var(--neon-pink);">🌄 ฉากหลัง (Background)</label>
+                <select id="background-select">
+                    <option value="Blurred Living Room">🏠 ห้องนั่งเล่น (เบลอ)</option>
+                    <option value="Minimal Cafe">☕ คาเฟ่มินิมอล</option>
+                    <option value="Sunny Beach">🏖️ ชายหาดสดใส</option>
+                    <option value="City Street">🏙️ ถนนในเมือง</option>
+                    <option value="Studio Grey">📷 สตูดิโอสีเทา (เน้นสินค้า)</option>
+                    <option value="Luxury Kitchen">🍳 ห้องครัวหรู</option>
+                    <option value="Green Park">🌳 สวนสาธารณะ</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="gender-select" style="font-weight:bold; color:#00f3ff;">👤 เพศตัวละคร (Gender)</label>
+            <select id="gender-select" style="width:100%; padding:8px; border-radius:4px; border:1px solid #444; background:#222; color:white; margin-bottom: 10px;">
+                <option value="Any">🎲 สุ่ม (Random)</option>
+                <option value="Female" selected>👩 หญิง (Female)</option>
+                <option value="Male">👨 ชาย (Male)</option>
+            </select>
+        </div>
+
+        <div class="control-group">
+            <label for="nationality-select" style="font-weight:bold; color:#00f3ff;">🌐 เชื้อชาติ (Nationality)</label>
+            <select id="nationality-select" style="width:100%; padding:8px; border-radius:4px; border:1px solid #444; background:#222; color:white;">
+                <option value="Thai" selected>🇹🇭 ไทย (Thai)</option>
+                <option value="Western">👱🏻‍♂️/👱🏻‍♀️ ฝรั่ง (Western)</option>
+                <option value="Korean">🇰🇷 เกาหลี (Korean)</option>
+                <option value="Japanese">🇯🇵 ญี่ปุ่น (Japanese)</option>
+                <option value="Chinese">🇨🇳 จีน (Chinese)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="camera-angle">🎥 มุมกล้อง (Camera)</label>
+            <select id="camera-angle">
+                <option value="Auto">อัตโนมัติ</option>
+                <option value="Close-up">Close-up (ใกล้)</option>
+                <option value="Medium Shot">Medium Shot (ครึ่งตัว)</option>
+            </select>
+        </div>
+        
+        <div class="input-group">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 5px;">
+                <label for="video-script" style="margin-bottom:0;">🗣️ คำพูด (Script)</label>
+                <button id="auto-script-btn" class="small-btn" style="border-color: var(--neon-pink); color: var(--neon-pink); font-size: 0.7rem; cursor: pointer;">
+                    ✨ ให้ AI คิด
+                </button>
+            </div>
+            <textarea id="video-script" rows="2" placeholder="ข้อความที่จะให้พูด..."></textarea>
+            <div class="scan-line"></div>
+        </div>
+
+        <div class="input-group">
+            <label for="art-style">🎨 สไตล์ภาพ</label>
+            <select id="art-style">
+                <option value="Realistic" selected>สมจริง (Realistic)</option>
+                <option value="Cinematic">ภาพยนตร์ (Cinematic)</option>
+                <option value="Minimal">มินิมอล (Minimal)</option>
+                <option value="Cyberpunk">ไซเบอร์พังค์</option>
+                <option value="Custom">กำหนดเอง...</option>
+            </select>
+            <input type="text" id="art-style-custom" class="custom-input hidden" placeholder="กำหนดสไตล์ภาพเอง...">
+        </div>
+
+        <div class="input-group">
+            <label>📐 อัตราส่วน</label>
+            <div class="button-group" style="margin-top: 5px;">
+                <input type="radio" id="ratio-16-9" name="aspect-ratio" value="16:9" style="display:none;">
+                <label for="ratio-16-9" class="cyber-btn small-btn ratio-label" id="label-16-9">แนวนอน (16:9)</label>
+                
+                <input type="radio" id="ratio-9-16" name="aspect-ratio" value="9:16" checked style="display:none;">
+                <label for="ratio-9-16" class="cyber-btn small-btn ratio-label" id="label-9-16">แนวตั้ง (9:16)</label>
+            </div>
+        </div>
+
+        <div class="input-group" style="margin-top: 15px;">
+            <label for="model-select">⚙️ เลือก Model</label>
+            <select id="model-select">
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash (เร็ว, ฟรี) 🚀</option>
+                <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
+                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash</option>
+                <option value="gemini-2.0-pro-exp">Gemini 2.0 Pro Exp</option>
+            </select>
+        </div>
+
+        <div class="input-group hidden">
+            <select id="content-type"><option value="Product Review">Product Review</option></select>
+            <input type="number" id="prompt-count" value="1">
+        </div>
+
+        <div class="button-group">
+            <button id="fill-btn" class="cyber-btn primary-btn">
+                <span class="btn-content">🚀 สร้าง Prompt</span>
+            </button>
+            <button id="clear-btn" class="cyber-btn secondary-btn">
+                <span>ล้าง</span>
+            </button>
+        </div>
+
+        <div id="output-section" class="hidden">
+            <div class="output-header">
+                <label>📋 ผลลัพธ์</label>
+                <button id="copy-all-btn" class="icon-btn small-btn">คัดลอก</button>
+            </div>
+            <div id="prompts-container" class="prompts-list"></div>
+        </div>
+
+        <div id="status-display" class="status-panel">
+            <span class="status-label">STATUS:</span>
+            <span id="status-text" class="status-text">READY</span>
+        </div>
+
+    </div>
+    <script src="sidepanel.js"></script>
+</body>
+</html>
